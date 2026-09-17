@@ -1,15 +1,28 @@
-(dotenv.config());
+require("dotenv").config();
 const express = require("express");
-const connectDB = require("./src/config/db");
+// importar la función
+const { connectDB } = require("./src/config/db");
 
 const app = express();
-connectDB();
 
-app.use(express.json());
-
-app.get("/", (req, res) => {
-  res.send("API is running...");
-});
+app.use(express.json()); // permitir JSON en el body
+app.use("/api/peluquerias", peluqueriaRoutes);
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
+
+// conectar con la bbdd y arrancar servidor tras conexión
+connectDB()
+  .then(() => {
+    // 404: debe ir al FINAL de todas las rutas/middlewares
+    app.use((req, res) => {
+      res.status(404).json({ error: "Route not found" });
+    });
+
+    app.listen(PORT, () => {
+      console.log(`http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("DB connection error:", err);
+    process.exit(1);
+  });
